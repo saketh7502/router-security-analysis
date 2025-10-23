@@ -7,9 +7,9 @@ from src.config import (
     SHODAN_API_KEY,
     SHODAN_SEARCH_URL,
     OLLAMA_API_ENDPOINT,
-    CVE_SEARCH_ENDPOINT,
     LLM_MODEL,
-    MAX_CVES_TO_CORRELATE
+    MAX_CVES_TO_CORRELATE,
+    NVD_API_ENDPOINT, NVD_API_KEY
 )
 
 # Use a global session for all requests for connection pooling and performance
