@@ -8,7 +8,8 @@ from src.config import (
     SHODAN_SEARCH_URL,
     OLLAMA_API_ENDPOINT,
     CVE_SEARCH_ENDPOINT,
-    LLM_MODEL
+    LLM_MODEL,
+    MAX_CVES_TO_CORRELATE
 )
 
 # Use a global session for all requests for connection pooling and performance
@@ -67,25 +68,45 @@ def parse_banner_with_llm(banner_data: Dict[str, Any]) -> Optional[Dict[str, str
 
 def query_cve_search(device_data: Dict[str, str]) -> List[Dict[str, Any]]:
     """
-    Queries a local cve-search instance for candidate vulnerabilities.
+    Queries the NVD API for candidate vulnerabilities based on keywords.
     """
     vendor = device_data.get('vendor')
     product = device_data.get('product')
 
     if not vendor or not product:
-        logging.warning("  [-] Skipping CVE search: Missing vendor or product.")
+        logging.warning("  [-] Skipping NVD search: Missing vendor or product.")
         return []
 
-    url = f"{CVE_SEARCH_ENDPOINT}/search/{vendor}/{product}"
-    logging.info(f"Querying cve-search for: {vendor}/{product}")
+    search_term = f"{vendor} {product}"
+    logging.info(f"Querying NVD for: '{search_term}'")
+
+    params = {'keywordSearch': search_term, 'resultsPerPage': 20}
+    headers = {'apiKey': NVD_API_KEY} if NVD_API_KEY else {}
+
     try:
-        response = api_session.get(url)
+        response = api_session.get(NVD_API_ENDPOINT, params=params, headers=headers)
         response.raise_for_status()
-        cves = response.json().get("data", [])
-        logging.info(f"  [+] Found {len(cves)} candidate CVEs.")
-        return cves
+        data = response.json()
+
+        # Transform NVD response to the format expected by the correlator
+        transformed_cves = []
+        for vuln in data.get('vulnerabilities', []):
+            cve_item = vuln.get('cve', {})
+            cve_id = cve_item.get('id')
+            # Find the English description
+            summary = "No description available."
+            for desc in cve_item.get('descriptions', []):
+                if desc.get('lang') == 'en':
+                    summary = desc.get('value')
+                    break
+            transformed_cves.append({'id': cve_id, 'summary': summary})
+        logging.info(f"  [+] Found {len(transformed_cves)} candidate CVEs from NVD.")
+        return transformed_cves
     except requests.exceptions.RequestException as e:
-        logging.error(f"  [!] Error querying cve-search: {e}")
+        if e.response is not None and e.response.status_code in [403, 429]:
+            logging.warning(f"  [!] NVD API rate limit likely exceeded (Status {e.response.status_code}). Consider reducing workers or getting an API key.")
+        else:
+            logging.error(f"  [!] Error querying NVD: {e}")
         return []
 
 def correlate_cves_with_llm(device_data: Dict[str, str], cve_list: List[Dict[str, Any]]) -> List[Dict[str, str]]:

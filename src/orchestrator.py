@@ -4,7 +4,7 @@ import sys
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.config import SHODAN_API_KEY
-from src.api_clients import (
+from src.api_clients import ( # This import is now correct
     fetch_shodan_data,
     parse_banner_with_llm,
     query_cve_search,
