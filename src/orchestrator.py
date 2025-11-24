@@ -11,6 +11,7 @@ from src.api_clients import ( # This import is now correct
     correlate_cves_with_llm
 )
 from src.reporting import generate_markdown_report
+from src.rs import is_routersploit_installed, run_routersploit_scan
 
 def process_device(device: dict) -> str:
     """
@@ -24,7 +25,20 @@ def process_device(device: dict) -> str:
     candidate_cves = query_cve_search(structured_data)
     correlated_cves = correlate_cves_with_llm(structured_data, candidate_cves)
     
-    return generate_markdown_report(device, structured_data, correlated_cves)
+    routersploit_output = None
+
+    if is_routersploit_installed():
+        user_input = input(f"\nDo you want to run Routersploit scan against {device.get('ip_str')}? (y/n): ").strip().lower()
+
+        if user_input == "y":
+            logging.info(f"Running Routersploit autopwn scanner on {device.get('ip_str')}...")
+            routersploit_output = run_routersploit_scan(device.get('ip_str'))
+        else:
+            logging.info("Skipping Routersploit scan as per user request.")
+    else:
+        logging.info("Routersploit not installed. Skipping.")
+
+    return generate_markdown_report(device, structured_data, correlated_cves, routersploit_output)
 
 
 def main():
