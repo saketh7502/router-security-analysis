@@ -11,7 +11,7 @@ from src.api_clients import ( # This import is now correct
     correlate_cves_with_llm
 )
 from src.reporting import generate_markdown_report
-from src.rs import is_routersploit_installed, run_routersploit_scan
+from src.rs import is_routersploit_installed, run_routersploit_scan, has_module_for_cve
 
 def process_device(device: dict) -> str:
     """
@@ -28,13 +28,32 @@ def process_device(device: dict) -> str:
     routersploit_output = None
 
     if is_routersploit_installed():
-        user_input = input(f"\nDo you want to run Routersploit scan against {device.get('ip_str')}? (y/n): ").strip().lower()
 
-        if user_input == "y":
-            logging.info(f"Running Routersploit autopwn scanner on {device.get('ip_str')}...")
-            routersploit_output = run_routersploit_scan(device.get('ip_str'))
+    # STEP A: Check which CVEs match Routersploit modules
+        cve_matches = []
+        for cve in correlated_cves:
+            cve_id = cve.get("cve_id")
+            if has_module_for_cve(cve_id):
+                cve_matches.append(cve_id)
+
+        # STEP B: If no modules exist, report and skip
+        if not cve_matches:
+            logging.info("Routersploit has no exploit modules for the correlated CVEs.")
+            routersploit_output = "Routersploit has no exploit modules for the identified CVEs."
         else:
-            logging.info("Skipping Routersploit scan as per user request.")
+            logging.info(f"Routersploit has modules for: {cve_matches}")
+
+            # STEP C: Ask user whether to run exploitation
+            user_input = input(
+                f"\nRoutersploit has exploit modules for {cve_matches}. Do you want to run them? (y/n): "
+            ).strip().lower()
+
+            if user_input == "y":
+                logging.info("Running Routersploit exploit modules...")
+                routersploit_output = run_routersploit_scan(device.get("ip_str"))
+            else:
+                routersploit_output = f"User declined to run exploitation modules for: {cve_matches}"
+
     else:
         logging.info("Routersploit not installed. Skipping.")
 

@@ -25,3 +25,22 @@ def run_routersploit_scan(target_ip: str) -> str:
     except Exception as e:
         logging.error(f"Routersploit scan failed: {e}")
         return "Routersploit scan failed or returned no output."
+
+def has_module_for_cve(cve_id: str) -> bool:
+    """
+    Checks if Routersploit has a module for the given CVE ID.
+    The search is a simple `rsf.py -m` lookup which returns an error
+    if the module does not exist.
+    """
+    try:
+        module_name = cve_id.lower().replace("-", "_")
+        cmd = f"rsf.py -m {module_name}"
+        output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode()
+
+        if "error" in output.lower() or "not found" in output.lower():
+            return False
+
+        return True
+    except Exception as e:
+        logging.error(f"Module scan failed for {cve_id}: {e}")
+        return False

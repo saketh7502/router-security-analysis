@@ -20,10 +20,12 @@ def generate_markdown_report(device_info: Dict[str, Any], parsed_data: Dict[str,
             report += f"- **{cve.get('cve_id')}**: {cve.get('explanation')}\n"
     
     report += "## Optional Routersploit Scan\n"
-    if routersploit_output:
-        report += f"```\n{routersploit_output}\n```\n"
-    else:
+    if routersploit_output is None:
         report += "Routersploit scan was skipped or unavailable.\n"
+    elif routersploit_output.strip() == "":
+        report += "Routersploit ran but found no results.\n"
+    else:
+        report += f"{routersploit_output}\n"
     
     report += "\n---\n"
     return report
