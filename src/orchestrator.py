@@ -11,7 +11,7 @@ from src.api_clients import ( # This import is now correct
     correlate_cves_with_llm
 )
 from src.reporting import generate_markdown_report
-from src.rs import is_routersploit_installed, run_routersploit_scan, has_module_for_cve
+from src.rs import is_routersploit_installed, run_routersploit_scan
 
 def process_device(device: dict) -> str:
     """
