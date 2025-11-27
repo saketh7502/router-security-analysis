@@ -18,8 +18,8 @@ def process_device(device: dict) -> str:
     Runs the full analysis pipeline for a single device.
     """
     structured_data = {
-    "vendor": "multi",
-    "product": "rom0",     # <-- guaranteed to have modules
+    "vendor": "cisco",
+    "product": "rv320",     # <-- guaranteed to have modules
     "version": "1.0"
     }
     print("\n[TEST MODE] Using hardcoded device:", structured_data)
