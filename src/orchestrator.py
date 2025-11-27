@@ -19,7 +19,7 @@ def process_device(device: dict) -> str:
     """
     structured_data = {
     "vendor": "dlink",
-    "product": "DCS-930L",     # <-- guaranteed to have modules
+    "product": "DGS-1510",     # <-- guaranteed to have modules
     "version": "1.0"
     }
     print("\n[TEST MODE] Using hardcoded device:", structured_data)
