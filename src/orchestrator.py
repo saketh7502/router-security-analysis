@@ -22,7 +22,6 @@ def process_device(device: dict) -> str:
     "product": "rv320",     # <-- guaranteed to have modules
     "version": "1.0"
     }
-    print("\n[TEST MODE] Using hardcoded device:", structured_data)
     if not structured_data:
         # Logged inside the function, so we can just return empty
         return ""
