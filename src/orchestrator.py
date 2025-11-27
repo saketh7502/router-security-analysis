@@ -20,7 +20,7 @@ def process_device(device: dict) -> str:
     structured_data = {
     "vendor": "cisco",
     "product": "rv320",     # <-- guaranteed to have modules
-    "version": "1.0"
+    "version": "1.4.2.15"
     }
     if not structured_data:
         # Logged inside the function, so we can just return empty
