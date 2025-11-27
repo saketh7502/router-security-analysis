@@ -1,7 +1,7 @@
 import json
 from typing import Dict, Any, List
 
-def generate_markdown_report(device_info: Dict[str, Any], parsed_data: Dict[str, str], correlated_cves: List[Dict[str, str]], routersploit_output=None) -> str:
+def generate_markdown_report(device_info: Dict[str, Any], parsed_data: Dict[str, str], correlated_cves: List[Dict[str, str]], routersploit_output=None, matched_modules = None) -> str:
     """
     Generates a human-readable Markdown report for a single device.
     """
@@ -20,12 +20,29 @@ def generate_markdown_report(device_info: Dict[str, Any], parsed_data: Dict[str,
             report += f"- **{cve.get('cve_id')}**: {cve.get('explanation')}\n"
     
     report += "## Optional Routersploit Scan\n"
-    if routersploit_output is None:
-        report += "Routersploit scan was skipped or unavailable.\n"
-    elif routersploit_output.strip() == "":
-        report += "Routersploit ran but found no results.\n"
+    if routersploit_output == "Routersploit not installed.":
+        report += "Routersploit is not installed on this system.\n\n"
+        report += "---\n"
+        return report
+
+    # Case 2 — No modules matched
+    if matched_modules == []:
+        report += "Routersploit has no exploit modules related to the detected device model.\n\n"
+        report += "---\n"
+        return report
+
+    # Case 3 — Modules matched but user skipped
+    if routersploit_output == "User skipped Routersploit exploitation.":
+        report += "User chose not to run any Routersploit exploit module.\n\n"
+        report += "---\n"
+        return report
+
+    # Case 4 — Exploit output present
+    if routersploit_output:
+        report += "### Exploit Output\n"
+        report += f"```\n{routersploit_output}\n```\n\n"
     else:
-        report += f"{routersploit_output}\n"
+        report += "No Routersploit scan was executed.\n\n"
     
     report += "\n---\n"
     return report
