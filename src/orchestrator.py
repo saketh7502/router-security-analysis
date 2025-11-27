@@ -17,7 +17,12 @@ def process_device(device: dict) -> str:
     """
     Runs the full analysis pipeline for a single device.
     """
-    structured_data = parse_banner_with_llm(device)
+    structured_data = {
+    "vendor": "dlink",
+    "product": "DCS-930L",     # <-- guaranteed to have modules
+    "version": "1.0"
+    }
+    print("\n[TEST MODE] Using hardcoded device:", structured_data)
     if not structured_data:
         # Logged inside the function, so we can just return empty
         return ""
