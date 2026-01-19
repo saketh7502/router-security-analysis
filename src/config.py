@@ -20,3 +20,7 @@ LLM_MODEL = os.getenv("LLM_MODEL", "llama3:8b")
 
 # --- Analysis Configuration ---
 MAX_CVES_TO_CORRELATE = int(os.getenv("MAX_CVES_TO_CORRELATE", 10))
+
+ROUTERSPLOIT_MODULE_PATH = os.path.expanduser(
+    "~/router-security-analysis/routersploit/routersploit/modules/exploits/routers"
+)

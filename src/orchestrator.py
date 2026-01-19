@@ -11,12 +11,15 @@ from src.api_clients import ( # This import is now correct
     correlate_cves_with_llm
 )
 from src.reporting import generate_markdown_report
+from src.rs import is_routersploit_installed, run_routersploit_scan
 
 def process_device(device: dict) -> str:
     """
     Runs the full analysis pipeline for a single device.
     """
-    structured_data = parse_banner_with_llm(device)
+    structured_data = {
+    parse_banner_with_llm(device)
+    }
     if not structured_data:
         # Logged inside the function, so we can just return empty
         return ""
@@ -24,7 +27,46 @@ def process_device(device: dict) -> str:
     candidate_cves = query_cve_search(structured_data)
     correlated_cves = correlate_cves_with_llm(structured_data, candidate_cves)
     
-    return generate_markdown_report(device, structured_data, correlated_cves)
+    routersploit_output = None
+
+    if is_routersploit_installed():
+
+        from src.rs import find_modules_by_product, run_specific_module  # import here to avoid circular
+
+        vendor = structured_data.get("vendor")
+        product = structured_data.get("product")
+
+        # STEP 1 — Find matching modules by product model prefix
+        similar_modules = find_modules_by_product(vendor, product)
+
+        if not similar_modules:
+            logging.info("Routersploit has no exploit modules related to this device model.")
+            routersploit_output = "Routersploit has no exploit modules related to this device model."
+        else:
+            print("\nRoutersploit has exploit modules for similar device models:")
+            for i, m in enumerate(similar_modules, start=1):
+                print(f"{i}. {m}")
+
+            # STEP 2 — Ask user which module to run
+            choice = input("\nSelect a module to run (1,2,3...) or 'n' to skip: ").strip().lower()
+
+            if choice == "n":
+                routersploit_output = "User skipped Routersploit exploitation."
+            else:
+                try:
+                    idx = int(choice) - 1
+                    module_name = similar_modules[idx]
+                    logging.info(f"Running Routersploit module: {module_name}")
+                    routersploit_output = run_specific_module(module_name, vendor, device.get("ip_str"))
+                except Exception as e:
+                    logging.error(f"Invalid choice or error running module: {e}")
+                    routersploit_output = "Invalid module selection or exploit error."
+
+    else:
+        logging.info("Routersploit not installed. Skipping.")
+        routersploit_output = "Routersploit not installed."
+
+    return generate_markdown_report(device, structured_data, correlated_cves, routersploit_output, matched_modules=similar_modules)
 
 
 def main():
