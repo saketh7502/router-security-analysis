@@ -18,9 +18,7 @@ def process_device(device: dict) -> str:
     Runs the full analysis pipeline for a single device.
     """
     structured_data = {
-    "vendor": "cisco",
-    "product": "rv320",     # <-- guaranteed to have modules
-    "version": "1.4.2.15"
+    parse_banner_with_llm(device)
     }
     if not structured_data:
         # Logged inside the function, so we can just return empty
